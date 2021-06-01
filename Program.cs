@@ -176,6 +176,22 @@ namespace CreateImage
             }
         }
 
+        public static bool AskCreateScanFile()
+        {
+            string input;
+
+            while (true)
+            {
+                Console.WriteLine("do you want to create a scan file? (y/n)");
+                input = Console.ReadLine().Trim().ToLower();
+
+                if (input == "n")
+                    return false;
+                if (input == "y")
+                    return true;
+            }
+        }
+
         public static Bitmap LoadImage(string path)
         {
             if (string.IsNullOrEmpty(path))
@@ -265,9 +281,63 @@ namespace CreateImage
             }*/
         }
 
+        public static void CreateScanFile(Bitmap data, string outName)
+        {
+            int count = 0;
+            int xpos;
+            int ypos;
+            List<string> outputList = new List<string> { };
+
+            Console.WriteLine("Scanning...");
+
+            for (int x = 0; x < (int)data.Width / 32; x++)
+                for (int y = 0; y < (int)data.Height / 32; y++)
+                {
+                    for (int i = 0; i < 32; i++)
+                    {
+                        xpos = i + (32 * x);
+                        for (int ii = 0; ii < 32; ii++)
+                        {
+                            ypos = ii + (32 * y);
+                            outputList.Add(dyeNameList[closestColor2(dye, data.GetPixel(xpos, ypos))]);
+                        }
+                    }
+
+                    count++;
+                    using (StreamWriter w = File.AppendText(outName + "_scan.txt"))
+                    {
+                        if (count == 1)
+                            w.WriteLine($"|${count}$|");
+                        else
+                            w.WriteLine($"\n\n|${count}$|");
+
+                        int loopNums = 1;
+                        foreach (string col in outputList)
+                        {
+                            if (loopNums == 32)
+                            {
+                                w.Write($"|{col}\n");
+                                loopNums = 0;
+                            }
+                            else if (loopNums == 1)
+                            {
+                                w.Write($"{col}");
+                            }
+                            else
+                            {
+                                w.Write($"|{col}");
+                            }
+                            loopNums++;
+                        }
+                    }
+                    outputList.Clear();
+                }
+        }
+
         static void Main(string[] args)
         {
             string fileName, outName;
+            bool createScanFile = false;
             Size autoSizeOutImage = Size.Empty;
             AskGetDitherResult dither = new AskGetDitherResult();
 
@@ -318,6 +388,7 @@ namespace CreateImage
                 autoSizeOutImage = AskGetSize();
                 Console.WriteLine("");
                 dither = AskGetDithering();
+                createScanFile = AskCreateScanFile();
             }
 
             Bitmap data = LoadImage(fileName);
@@ -343,6 +414,8 @@ namespace CreateImage
                 data = newScaled;
             }
 
+            
+
             Console.WriteLine("\nconverting...");
 
             // user wants dithering
@@ -350,7 +423,14 @@ namespace CreateImage
             {
                 // request image tansform disposes of the input image so we don't need to
                 // do anythign special to dispose of the unused data
-                DitherHelper.RequestImageTransform(data, dither.Transform, dither.DitherAlgorithm).Save(outName, ImageFormat.Png);
+                using (Bitmap bmp = DitherHelper.RequestImageTransform(data, dither.Transform, dither.DitherAlgorithm))
+                {
+                    if (createScanFile)
+                    {
+                        CreateScanFile(bmp, outName);
+                    }
+                    bmp.Save(outName, ImageFormat.Png);
+                }
             }
             else
             {
@@ -368,8 +448,14 @@ namespace CreateImage
 
                     g.DrawImage(newBitmap, new Point(0, 0));
 
-                    newBitmap.Save(outName, ImageFormat.Png);
+                    
                 }
+
+                if (createScanFile)
+                {
+                    CreateScanFile(newBitmap, outName);
+                }
+                newBitmap.Save(outName, ImageFormat.Png);
                 data.Dispose();
             }
 
@@ -615,6 +701,241 @@ namespace CreateImage
             Color.FromArgb(161, 40, 41),
             Color.FromArgb(131, 33, 33),
             Color.FromArgb(99, 25, 24)
+        };
+        public static string[] dyeNameList = new string[232]
+        {
+            "flin+",
+            "flin",
+            "flin-",
+            "flin--",
+            "char+",
+            "char",
+            "char-",
+            "char--",
+            "ink+",
+            "ink",
+            "ink-",
+            "ink--",
+            "iron+",
+            "iron",
+            "iron-",
+            "iron--",
+            "ghas+",
+            "ghas",
+            "ghas-",
+            "ghas--",
+            "gunp+",
+            "gunp",
+            "gunp-",
+            "gunp--",
+            "ligh+",
+            "ligh",
+            "ligh-",
+            "ligh--",
+            "cobw+",
+            "cobw",
+            "cobw-",
+            "cobw--",
+            "bone+",
+            "bone",
+            "bone-",
+            "bone--",
+            "snow+",
+            "snow",
+            "snow-",
+            "snow--",
+            "grey+",
+            "grey",
+            "grey-",
+            "grey--",
+            "red+",
+            "red",
+            "red-",
+            "red--",
+            "cact+",
+            "cact",
+            "cact-",
+            "cact--",
+            "coco+",
+            "coco",
+            "coco-",
+            "coco--",
+            "lapi+",
+            "lapi",
+            "lapi-",
+            "lapi--",
+            "pdye+",
+            "pdye",
+            "pdye-",
+            "pdye--",
+            "cyan+",
+            "cyan",
+            "cyan-",
+            "cyan--",
+            "pink+",
+            "pink",
+            "pink-",
+            "pink--",
+            "lime+",
+            "lime",
+            "lime-",
+            "lime--",
+            "yell+",
+            "yell",
+            "yell-",
+            "yell--",
+            "lblu+",
+            "lblu",
+            "lblu-",
+            "lblu--",
+            "mage+",
+            "mage",
+            "mage-",
+            "mage--",
+            "oran+",
+            "oran",
+            "oran-",
+            "oran--",
+            "pump+",
+            "pump",
+            "pump-",
+            "pump--",
+            "melo+",
+            "melo",
+            "melo-",
+            "melo--",
+            "wart+",
+            "wart",
+            "wart-",
+            "wart--",
+            "pris+",
+            "pris",
+            "pris-",
+            "pris--",
+            "gras+",
+            "gras",
+            "gras-",
+            "gras--",
+            "gold+",
+            "gold",
+            "gold-",
+            "gold--",
+            "ice+",
+            "ice",
+            "ice-",
+            "ice--",
+            "leav+",
+            "leav",
+            "leav-",
+            "leav--",
+            "lapb+",
+            "lapb",
+            "lapb-",
+            "lapb--",
+            "doak+",
+            "doak",
+            "doak-",
+            "doak--",
+            "bric+",
+            "bric",
+            "bric-",
+            "bric--",
+            "lore+",
+            "lore",
+            "lore-",
+            "lore--",
+            "emer+",
+            "emer",
+            "emer-",
+            "emer--",
+            "birc+",
+            "birc",
+            "birc-",
+            "birc--",
+            "egg+",
+            "egg",
+            "egg-",
+            "egg--",
+            "magm+",
+            "magm",
+            "magm-",
+            "magm--",
+            "beet+",
+            "beet",
+            "beet-",
+            "beet--",
+            "myce+",
+            "myce",
+            "myce-",
+            "myce--",
+            "glow+",
+            "glow",
+            "glow-",
+            "glow--",
+            "slim+",
+            "slim",
+            "slim-",
+            "slim--",
+            "spid+",
+            "spid",
+            "spid-",
+            "spid--",
+            "soul+",
+            "soul",
+            "soul-",
+            "soul--",
+            "mush+",
+            "mush",
+            "mush-",
+            "mush--",
+            "chor+",
+            "chor",
+            "chor-",
+            "chor--",
+            "purp+",
+            "purp",
+            "purp-",
+            "purp--",
+            "podz+",
+            "podz",
+            "podz-",
+            "podz--",
+            "pota+",
+            "pota",
+            "pota-",
+            "pota--",
+            "appl+",
+            "appl",
+            "appl-",
+            "appl--",
+            "wnyl+",
+            "wnyl",
+            "wnyl-",
+            "wnyl--",
+            "wste+",
+            "wste",
+            "wste-",
+            "wste--",
+            "whyp+",
+            "whyp",
+            "whyp-",
+            "whyp--",
+            "wwar+",
+            "wwar",
+            "wwar-",
+            "wwar--",
+            "chyp+",
+            "chyp",
+            "chyp-",
+            "chyp--",
+            "cnyl+",
+            "cnyl",
+            "cnyl-",
+            "cnyl--",
+            "cste+",
+            "cste",
+            "cste-",
+            "cste--"
         };
     }
 }
