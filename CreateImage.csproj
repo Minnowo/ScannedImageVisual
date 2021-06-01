@@ -7,7 +7,7 @@
     <ProjectGuid>{978515B0-9AC1-4D55-B894-3931F2EF0FFA}</ProjectGuid>
     <OutputType>Exe</OutputType>
     <RootNamespace>CreateImage</RootNamespace>
-    <AssemblyName>CreateImage</AssemblyName>
+    <AssemblyName>Convert_Image_To_MC_Map_Colors</AssemblyName>
     <TargetFrameworkVersion>v4.7.2</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
     <AutoGenerateBindingRedirects>true</AutoGenerateBindingRedirects>
@@ -22,6 +22,7 @@
     <DefineConstants>DEBUG;TRACE</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
     <PlatformTarget>AnyCPU</PlatformTarget>
@@ -44,6 +45,35 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Dithering\ArgbColor.cs" />
+    <Compile Include="Dithering\DitherHelper.cs" />
+    <Compile Include="Dithering\Helpers\ArticleDiagrams.cs" />
+    <Compile Include="Dithering\Dithering\AtkinsonDithering.cs" />
+    <Compile Include="Dithering\Dithering\Bayer2.cs" />
+    <Compile Include="Dithering\Dithering\Bayer3.cs" />
+    <Compile Include="Dithering\Dithering\Bayer4.cs" />
+    <Compile Include="Dithering\Dithering\Bayer8.cs" />
+    <Compile Include="Dithering\Dithering\BurkesDithering.cs" />
+    <Compile Include="Dithering\Dithering\ErrorDiffusionDithering.cs" />
+    <Compile Include="Dithering\Dithering\FloydSteinbergDithering.cs" />
+    <Compile Include="Dithering\Dithering\IErrorDiffusion.cs" />
+    <Compile Include="Dithering\Helpers\ImageUtilities.cs" />
+    <Compile Include="Dithering\Helpers\IntegerExtensions.cs" />
+    <Compile Include="Dithering\Transforms\MinecraftMapColorPalettePixelTransform.cs" />
+    <Compile Include="Dithering\Transforms\IPixelTransform.cs" />
+    <Compile Include="Dithering\Dithering\JarvisJudiceNinkeDithering.cs" />
+    <Compile Include="Dithering\Transforms\MonochromePixelTransform.cs" />
+    <Compile Include="Dithering\Dithering\OrderedDithering.cs" />
+    <Compile Include="Dithering\Dithering\RandomDithering.cs" />
+    <Compile Include="Dithering\Dithering\Sierra2Dithering.cs" />
+    <Compile Include="Dithering\Dithering\Sierra3Dithering.cs" />
+    <Compile Include="Dithering\Dithering\SierraLiteDithering.cs" />
+    <Compile Include="Dithering\Transforms\SimpleIndexedPalettePixelTransform.cs" />
+    <Compile Include="Dithering\Transforms\SimpleIndexedPalettePixelTransform16.cs" />
+    <Compile Include="Dithering\Transforms\SimpleIndexedPalettePixelTransform256.cs" />
+    <Compile Include="Dithering\Transforms\SimpleIndexedPalettePixelTransform8.cs" />
+    <Compile Include="Dithering\Dithering\StuckiDithering.cs" />
+    <Compile Include="Dithering\WorkerData.cs" />
     <Compile Include="LineComplete.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
@@ -51,5 +81,6 @@
   <ItemGroup>
     <None Include="App.config" />
   </ItemGroup>
+  <ItemGroup />
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>

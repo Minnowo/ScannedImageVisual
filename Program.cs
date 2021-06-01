@@ -7,17 +7,24 @@ using System.Drawing;
 using System.Drawing.Imaging;
 using System.IO;
 using System.Text.RegularExpressions;
+using CreateImage.Dithering;
 
 namespace CreateImage
 {
     class Program
     {
+        public struct AskGetDitherResult
+        {
+            public IErrorDiffusion DitherAlgorithm;
+            public IPixelTransform Transform;
+            public byte Threshold;
+        }
+
         public static int closestColor2(List<Color> colors, Color target)
         {
             var colorDiffs = colors.Select(n => ColorDiff(n, target)).Min(n => n);
             return colors.FindIndex(n => ColorDiff(n, target) == colorDiffs);
         }
-
 
         // distance in RGB space
         public static int ColorDiff(Color c1, Color c2)
@@ -26,7 +33,6 @@ namespace CreateImage
                                    + (c1.G - c2.G) * (c1.G - c2.G)
                                    + (c1.B - c2.B) * (c1.B - c2.B));
         }
-
 
         public static string GetFileName()
         {
@@ -43,6 +49,130 @@ namespace CreateImage
                     return fileName;
                     //return Path.GetFileNameWithoutExtension(fileName) + "_convert.png";
                 }
+            }
+        }
+
+        public static AskGetDitherResult AskGetDithering()
+        {
+            string input;
+            int index = -2;
+
+            AskGetDitherResult result = new AskGetDitherResult();
+
+            while (true)
+            {
+                Console.WriteLine("\nwould you like to dither the image? (y/n)");
+                input = Console.ReadLine().Trim().ToLower();
+
+                if (input == "n")
+                    return result;
+                
+                if (input == "y")
+                    break;
+            }
+
+            while (true)
+            {
+                Console.WriteLine("\nplease input the number of the pixel transform you'd like to use (-1 to cancel)");
+                Console.WriteLine(
+                    "\t0 : Monochrome\n\t" + 
+                    "1 : Color 232\n\t" 
+                    );
+                input = Console.ReadLine().Trim().ToLower();
+
+                if(int.TryParse(input, out index))
+                {
+                    if (index == -1)
+                        return result;
+
+                    if (index == 0)
+                    {
+                        byte i = 128;
+                        while (true)
+                        {
+                            Console.WriteLine("input the color threshold (0 - 255)");
+                            input = Console.ReadLine().Trim().ToLower();
+
+                            if(byte.TryParse(input, out i))
+                            {
+                                i = ((int)i).ToByte();
+                                break;
+                            }
+                        }
+
+                        result.Threshold = i;
+                        result.Transform = GetPixelTransform(1, i);
+                        break;
+                    }
+
+                    if(index > 0 && index < 4)
+                    {
+                        result.Transform = GetPixelTransform(index.ToByte(), 0);
+                        break;
+                    }
+                }
+            }
+
+            while (true)
+            {
+                Console.WriteLine("\nplease input the number of the dithering algorithm you'd like to use (-1 to cancel)");
+                Console.WriteLine(
+                    "\t0 : Floyd Steinberg\n\t" +
+                    "1 : Burks\n\t" +
+                    "2 : Jarvis Judice Ninke\n\t" +
+                    "3 : Stucki\n\t" +
+                    "4 : Sierra 3\n\t" +
+                    "5 : Sierra 2\n\t" +
+                    "6 : Sierra Lite\n\t" +
+                    "7 : Atkinson\n\t" +
+                    "8 : Random\n\t" +
+                    "9 : Bayer 2\n\t" +
+                    "10 : Bayer 3\n\t" +
+                    "11 : Bayer 4\n\t" +
+                    "12 : Bayer 8\n"
+                    );
+                input = Console.ReadLine().ToLower().Trim();
+
+                if (int.TryParse(input, out index))
+                {
+                    if (index == -1)
+                        return result;
+
+                    if (index < 13 && index > -1)
+                    {
+                        result.DitherAlgorithm = GetDitheringInstance(index.ToByte());
+                        break;
+                    }
+                }
+            }
+
+            return result;
+        }
+
+        public static Size AskGetSize()
+        {
+            string input;
+
+            while (true)
+            {
+                Console.WriteLine("\nwould you like to resize the image before converting? (y/n)");
+                input = Console.ReadLine().Trim().ToLower();
+
+                if (input == "n")
+                    return Size.Empty;
+
+                if (input == "y")
+                    break;
+            }
+
+            while (true)
+            {
+                Console.WriteLine("\nplease input the size you'd like");
+                input = Console.ReadLine().Trim().ToLower();
+                Size s = ParseSize(input);
+
+                if (s != Size.Empty)
+                    return s;
             }
         }
 
@@ -81,34 +211,65 @@ namespace CreateImage
             return Size.Empty;
         }
 
-        public static Size GetImageDimensionsFile(string imagePath)
+        public static IErrorDiffusion GetDitheringInstance(byte input)
         {
-            if (!File.Exists(imagePath))
-                return Size.Empty;
+            switch (input)
+            {
+                default:
+                    return null;
+                case 0:
+                    return new FloydSteinbergDithering();
+                case 1:
+                    return new BurksDithering();
+                case 2:
+                    return new JarvisJudiceNinkeDithering();
+                case 3:
+                    return new StuckiDithering();
+                case 4:
+                    return new Sierra3Dithering();
+                case 5:
+                    return new Sierra2Dithering();
+                case 6:
+                    return new SierraLiteDithering();
+                case 7:
+                    return new AtkinsonDithering();
+                case 8:
+                    return new RandomDithering();
+                case 9:
+                    return new Bayer2();
+                case 10:
+                    return new Bayer3();
+                case 11:
+                    return new Bayer4();
+                case 12:
+                    return new Bayer8();
+            }
+        }
 
-            try
+        public static IPixelTransform GetPixelTransform(byte input, byte threshold = 0)
+        {
+            if (threshold != 0)
+                return new MonochromePixelTransform(threshold);
+
+            return new MinecraftMapColorPalettePixelTransform();
+            /*switch (input)
             {
-                using (FileStream fileStream = new FileStream(imagePath, FileMode.Open, FileAccess.Read, FileShare.Read))
-                using (Image image = Image.FromStream(fileStream, false, false))
-                {
-                    return new Size(image.Width, image.Height);
-                }
-            }
-            catch (Exception e)
-            {
-                Console.WriteLine(e);
-                return Size.Empty;
-            }
-            finally
-            {
-                GC.Collect();
-            }
+                
+                case 0:
+                    return new SimpleIndexedPalettePixelTransform8();
+                case 1:
+                    return new SimpleIndexedPalettePixelTransform16();
+                default:
+                case 2:
+                    return new SimpleIndexedPalettePixelTransform256();
+            }*/
         }
 
         static void Main(string[] args)
         {
             string fileName, outName;
             Size autoSizeOutImage = Size.Empty;
+            AskGetDitherResult dither = new AskGetDitherResult();
 
             if (args.Length > 0)
             {
@@ -153,6 +314,10 @@ namespace CreateImage
             {
                 fileName = GetFileName();
                 outName = Path.GetFileNameWithoutExtension(fileName) + "_convert.png";
+                Console.WriteLine("");
+                autoSizeOutImage = AskGetSize();
+                Console.WriteLine("");
+                dither = AskGetDithering();
             }
 
             Bitmap data = LoadImage(fileName);
@@ -180,27 +345,37 @@ namespace CreateImage
 
             Console.WriteLine("\nconverting...");
 
-            Color color;
-            Bitmap newBitmap = new Bitmap(data.Width, data.Height);
-
-            using (Graphics g = Graphics.FromImage(newBitmap))
+            // user wants dithering
+            if (dither.DitherAlgorithm != null)
             {
-                for (int x = 0; x < data.Width; x++)
-                    for (int y = 0; y < data.Height; y++)
-                    {
-                        color = data.GetPixel(x, y);
-                        newBitmap.SetPixel(x, y, dye[closestColor2(dye, color)]);
-                    }
-
-                g.DrawImage(newBitmap, new Point(0, 0));
-
-                newBitmap.Save(outName, ImageFormat.Png);
+                // request image tansform disposes of the input image so we don't need to
+                // do anythign special to dispose of the unused data
+                DitherHelper.RequestImageTransform(data, dither.Transform, dither.DitherAlgorithm).Save(outName, ImageFormat.Png);
             }
-            data.Dispose();
+            else
+            {
+                Color color;
+                Bitmap newBitmap = new Bitmap(data.Width, data.Height);
+
+                using (Graphics g = Graphics.FromImage(newBitmap))
+                {
+                    for (int x = 0; x < data.Width; x++)
+                        for (int y = 0; y < data.Height; y++)
+                        {
+                            color = data.GetPixel(x, y);
+                            newBitmap.SetPixel(x, y, dye[closestColor2(dye, color)]);
+                        }
+
+                    g.DrawImage(newBitmap, new Point(0, 0));
+
+                    newBitmap.Save(outName, ImageFormat.Png);
+                }
+                data.Dispose();
+            }
 
             Console.WriteLine("done.\n");
             Console.WriteLine(outName);
-            Console.ReadLine();
+            //Console.ReadLine();
 
         }
 

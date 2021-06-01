@@ -5,11 +5,11 @@ using System.Runtime.InteropServices;
 // General Information about an assembly is controlled through the following
 // set of attributes. Change these attribute values to modify the information
 // associated with an assembly.
-[assembly: AssemblyTitle("CreateImage")]
-[assembly: AssemblyDescription("")]
+[assembly: AssemblyTitle("Convert_Image_To_MC_Map_Colors")]
+[assembly: AssemblyDescription("convert an image to colors used for vaulengate map mod in Minecraft")]
 [assembly: AssemblyConfiguration("")]
 [assembly: AssemblyCompany("")]
-[assembly: AssemblyProduct("CreateImage")]
+[assembly: AssemblyProduct("Convert_Image_To_MC_Map_Colors")]
 [assembly: AssemblyCopyright("Copyright ©  2021")]
 [assembly: AssemblyTrademark("")]
 [assembly: AssemblyCulture("")]
