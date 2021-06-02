@@ -15,6 +15,12 @@ namespace CreateImage.Dithering
         {
             WorkerData workerData;
 
+            if(image.PixelFormat != System.Drawing.Imaging.PixelFormat.Format32bppArgb)
+                using(Bitmap tmp = image)
+                {
+                    image = tmp.Copy();
+                }
+
             workerData = new WorkerData
             {
                 Image = image,
